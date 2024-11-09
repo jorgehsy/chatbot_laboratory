@@ -1,0 +1,41 @@
+# docker-compose.prod.yml
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - DEBUG=0
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+  db:
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt

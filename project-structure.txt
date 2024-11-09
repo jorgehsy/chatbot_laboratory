@@ -1,0 +1,45 @@
+chatbot-project/
+├── .env                      # Environment variables
+├── .gitignore               # Git ignore file
+├── Dockerfile               # Docker configuration
+├── docker-compose.yml       # Docker Compose main config
+├── docker-compose.dev.yml   # Development Docker config
+├── docker-compose.prod.yml  # Production Docker config
+├── pyproject.toml          # Poetry dependencies and project metadata
+├── poetry.lock             # Poetry lock file
+├── README.md               # Project documentation
+├── init.sql               # Database initialization SQL
+│
+├── src/                   # Source code
+│   └── chatbot/
+│       ├── __init__.py
+│       ├── main.py       # Application entry point
+│       ├── models.py     # Database models
+│       ├── database.py   # Database management
+│       ├── chat_manager.py    # Chat logic
+│       ├── llm_handler.py     # LLM integration
+│       ├── bulk_order.py      # Bulk order handling
+│       └── utils.py           # Utility functions
+│
+├── tests/                 # Test files
+│   ├── __init__.py
+│   ├── conftest.py       # Test configuration and fixtures
+│   ├── test_database.py  # Database tests
+│   ├── test_chatbot.py   # Chatbot logic tests
+│   ├── test_api.py       # API endpoint tests
+│   ├── test_inventory.py # Inventory management tests
+│   └── test_bulk_orders.py  # Bulk order tests
+│
+├── scripts/              # Utility scripts
+│   ├── init_db.py       # Database initialization
+│   ├── backup_db.py     # Database backup
+│   └── seed_data.py     # Sample data creation
+│
+├── docs/                 # Documentation
+│   ├── api.md           # API documentation
+│   ├── setup.md         # Setup instructions
+│   └── deployment.md    # Deployment guide
+│
+└── .github/             # GitHub specific files
+    └── workflows/       # GitHub Actions
+        └── test.yml    # CI pipeline configuration
