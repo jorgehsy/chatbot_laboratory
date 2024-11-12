@@ -34,9 +34,33 @@ class DatabaseManager:
                 }
             return None
 
+    async def get_customer_by_email(self, customer_email: str) -> Optional[Dict]:
+        with self.get_db() as db:
+            customer = db.query(Customer).filter(Customer.email == customer_email).first()
+            if customer:
+                return {
+                    "id": customer.id,
+                    "name": customer.name,
+                    "email": customer.email,
+                    "default_shipping_address": customer.default_shipping_address
+                }
+            return None
+
     async def get_product(self, product_id: int) -> Optional[Dict]:
         with self.get_db() as db:
             product = db.query(Product).filter(Product.id == product_id).first()
+            if product:
+                return {
+                    "id": product.id,
+                    "name": product.name,
+                    "price": product.price,
+                    "inventory_count": product.inventory_count
+                }
+            return None
+
+    async def get_product_by_name(self, product_name: str) -> Optional[Dict]:
+        with self.get_db() as db:
+            product = db.query(Product).filter(Product.name == product_name).first()
             if product:
                 return {
                     "id": product.id,

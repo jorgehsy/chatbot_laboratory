@@ -12,14 +12,7 @@ from .config import get_settings, Settings
 from .chat_manager import LLMEnhancedChatbot
 from .models import OrderContext
 from .database import DatabaseManager
-from .utils import handle_error, measure_time
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+from .utils import handle_error, measure_time, logger
 
 # Initialize settings
 settings = get_settings()

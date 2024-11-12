@@ -54,7 +54,7 @@ class LLMHandler:
             self.default_model = "claude-3-opus-20240229"
         else:
             self.client = openai.OpenAI()
-            self.default_model = "gpt-4-turbo-preview"
+            self.default_model = "gpt-4o"
 
     def _get_default_config(self) -> Dict:
         """Get default configuration for the LLM"""
@@ -67,7 +67,7 @@ class LLMHandler:
             LLMProvider.OPENAI: {
                 "temperature": 0.7,
                 "max_tokens": 1000,
-                "model": "gpt-4-turbo-preview"
+                "model": "gpt-4o"
             }
         }[self.provider]
 
@@ -170,7 +170,7 @@ class LLMHandler:
 
     async def _openai_completion(self, prompt: str, context: str = "") -> str:
         """Get completion from OpenAI's GPT"""
-        response = await self.client.chat.completions.create(
+        response = self.client.chat.completions.create(
             model=self.model_config.get("model", self.default_model),
             messages=[
                 {"role": "system", "content": self._get_system_prompt(context)},

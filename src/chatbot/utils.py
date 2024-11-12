@@ -298,6 +298,9 @@ def safe_json_dumps(obj: Any) -> str:
         logger.error(f"JSON encode error: {str(e)}")
         return "{}"
 
+def parse_openai_content(content) -> ...:
+    return content.replace('```json', '').replace('```', '').strip()
+
 
 # Conversation context utilities
 class ConversationContext:
@@ -344,5 +347,7 @@ __all__ = [
     'handle_error',
     'safe_json_loads',
     'safe_json_dumps',
-    'ConversationContext'
+    'ConversationContext',
+    'logger',
+    'parse_openai_content'
 ]
