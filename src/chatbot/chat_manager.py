@@ -62,107 +62,107 @@ class LLMEnhancedChatbot:
             self.client = openai.OpenAI()
 
     def create_system_prompt(self) -> str:
-        return f"""You are a helpful sales assistant bot that helps create purchase orders.
-        Current State: {self.state.value}
-        Order Context: {self.order_context.json() if self.order_context else "No active order"}
+        return f"""Eres un asistente de ventas AI que ayuda a crear pedidos.
+        Estado Actual: {self.state.value}
+        Contexto del Pedido: {self.order_context.json() if self.order_context else "Sin pedido activo"}
 
-        Based on the current state, you should:
+        Basado en el estado actual, debes:
 
         {self._get_state_instructions()}
 
-        Always maintain a professional and helpful tone.
-        If you need clarification, ask specific questions.
-        Guide the user through the order process step by step.
+        Mantén siempre un tono profesional y servicial.
+        Si necesitas aclaraciones, haz preguntas específicas.
+        Guía al usuario a través del proceso de pedido paso a paso.
         """
     def _get_state_instructions(self) -> str:
-        """Get specific instructions based on current state"""
+        """Obtener instrucciones específicas basadas en el estado actual"""
         instructions = {
             ConversationState.INIT: """
-                - Greet the user
-                - Ask if they're ready to place an order
-                - Move to GREETING state
+                - Saluda al usuario
+                - Pregunta si están listos para hacer un pedido
+                - Cambia al estado GREETING
             """,
             ConversationState.GREETING: """
-                - Identify if user is a returning customer
-                - Ask for customer information
-                - Move to CUSTOMER_SELECTION state
+                - Identifica si el usuario es cliente recurrente
+                - Solicita información del cliente
+                - Cambia al estado CUSTOMER_SELECTION
             """,
             ConversationState.CUSTOMER_SELECTION: """
-                - Validate customer information
-                - If valid, move to CUSTOMER_CONFIRMATION
-                - If invalid, ask for clarification
+                - Valida la información del cliente
+                - Si es válida, cambia a CUSTOMER_CONFIRMATION
+                - Si no es válida, solicita aclaración
             """,
             ConversationState.CUSTOMER_CONFIRMATION: """
-                - Confirm customer details
-                - Move to ORDER_START state
+                - Confirma los detalles del cliente
+                - Cambia al estado ORDER_START
             """,
             ConversationState.ORDER_START: """
-                - Ask what products they'd like to order
-                - Move to PRODUCT_SELECTION state
+                - Pregunta qué productos desean pedir
+                - Cambia al estado PRODUCT_SELECTION
             """,
             ConversationState.PRODUCT_SELECTION: """
-                - Help select specific products
-                - Validate product availability
-                - Move to QUANTITY_INPUT state
+                - Ayuda a seleccionar productos específicos
+                - Valida disponibilidad del producto
+                - Cambia al estado QUANTITY_INPUT
             """,
             ConversationState.QUANTITY_INPUT: """
-                - Get desired quantity
-                - Validate inventory availability
-                - Ask if they want to add more products
+                - Obtén la cantidad deseada
+                - Valida disponibilidad de inventario
+                - Pregunta si quieren agregar más productos
             """,
             ConversationState.ADD_MORE_PRODUCTS: """
-                - If yes, return to PRODUCT_SELECTION
-                - If no, move to SHIPPING_ADDRESS
+                - Si es sí, vuelve a PRODUCT_SELECTION
+                - Si es no, cambia a SHIPPING_ADDRESS
             """,
             ConversationState.SHIPPING_ADDRESS: """
-                - Confirm or update shipping address
-                - Move to SPECIAL_INSTRUCTIONS state
+                - Confirma o actualiza dirección de envío
+                - Cambia al estado SPECIAL_INSTRUCTIONS
             """,
             ConversationState.SPECIAL_INSTRUCTIONS: """
-                - Ask for any special instructions
-                - Move to ORDER_SUMMARY state
+                - Pregunta por instrucciones especiales
+                - Cambia al estado ORDER_SUMMARY
             """,
             ConversationState.ORDER_SUMMARY: """
-                - Show complete order summary
-                - Move to PRICE_CONFIRMATION state
+                - Muestra resumen completo del pedido
+                - Cambia al estado PRICE_CONFIRMATION
             """,
             ConversationState.PRICE_CONFIRMATION: """
-                - Confirm pricing details
-                - Move to PAYMENT_METHOD state
+                - Confirma detalles de precios
+                - Cambia al estado PAYMENT_METHOD
             """,
             ConversationState.PAYMENT_METHOD: """
-                - Get payment method
-                - Move to ORDER_CONFIRMATION state
+                - Obtén método de pago
+                - Cambia al estado ORDER_CONFIRMATION
             """,
             ConversationState.ORDER_CONFIRMATION: """
-                - Get final confirmation
-                - If confirmed, move to ORDER_PROCESSING
-                - If not, allow modifications
+                - Obtén confirmación final
+                - Si se confirma, cambia a ORDER_PROCESSING
+                - Si no, permite modificaciones
             """,
             ConversationState.ORDER_PROCESSING: """
-                - Process the order
-                - Update inventory
-                - Move to ORDER_COMPLETE state
+                - Procesa el pedido
+                - Actualiza inventario
+                - Cambia al estado ORDER_COMPLETE
             """,
             ConversationState.ORDER_COMPLETE: """
-                - Show order confirmation
-                - Provide order number
-                - Ask if they need anything else
+                - Muestra confirmación del pedido
+                - Proporciona número de pedido
+                - Pregunta si necesitan algo más
             """
         }
-        return instructions.get(self.state, "Proceed with the conversation naturally.")
+        return instructions.get(self.state, "Continúa con la conversación de manera natural.")
 
     async def extract_intent_and_entities(self, message: str) -> Dict:
         prompt = f"""
-        Analyze the following message and extract relevant information for order processing.
-        Current state: {self.state.value}
-        Message: "{message}"
+        Analiza el siguiente mensaje y extrae información relevante para el procesamiento del pedido.
+        Estado actual: {self.state.value}
+        Mensaje: "{message}"
 
-        Return a JSON object with:
-        - intent: the user's primary intent
-        - entities: any relevant entities (customers, products, quantities, addresses)
-        - requires_clarification: boolean
-        - suggested_next_state: next conversation state
+        Devuelve un objeto JSON con:
+        - intent: la intención principal del usuario
+        - entities: entidades relevantes (clientes, productos, cantidades, direcciones)
+        - requires_clarification: booleano
+        - suggested_next_state: siguiente estado de la conversación
         """
 
         if self.llm_provider == "anthropic":
@@ -283,39 +283,39 @@ class LLMEnhancedChatbot:
             self.order_context.special_instructions = message
 
     async def _generate_order_summary(self) -> str:
-        """Generate order summary"""
-        summary = "Order Summary:\n"
+        """Generar resumen del pedido"""
+        summary = "Resumen del Pedido:\n"
 
         if self.order_context.customer_id:
             customer = await self.db_manager.get_customer(self.order_context.customer_id)
-            summary += f"Customer: {customer['name']}\n"
+            summary += f"Cliente: {customer['name']}\n"
 
-        summary += f"Shipping to: {self.order_context.shipping_address}\n\n"
+        summary += f"Envío a: {self.order_context.shipping_address}\n\n"
 
-        summary += "Products:\n"
+        summary += "Productos:\n"
         for item in self.order_context.items:
             subtotal = item['quantity'] * item['unit_price']
             summary += f"- {item['quantity']}x {item['product_name']} @ ${item['unit_price']} = ${subtotal}\n"
 
-        summary += f"\nTotal Amount: ${self.order_context.total_amount:.2f}"
+        summary += f"\nMonto Total: ${self.order_context.total_amount:.2f}"
 
         if self.order_context.special_instructions:
-            summary += f"\n\nSpecial Instructions: {self.order_context.special_instructions}"
+            summary += f"\n\nInstrucciones Especiales: {self.order_context.special_instructions}"
 
         return summary
 
     async def generate_response(self, message: str, extracted_info: Dict) -> str:
         prompt = f"""
-        Generate a natural response to the user's message.
-        Current state: {self.state.value}
-        User message: "{message}"
-        Extracted information: {json.dumps(extracted_info)}
+        Genera una respuesta natural al mensaje del usuario.
+        Estado actual: {self.state.value}
+        Mensaje del usuario: "{message}"
+        Información extraída: {json.dumps(extracted_info)}
 
-        Requirements:
-        1. Be conversational but professional
-        2. If information is missing, ask for it
-        3. If proceeding to next state, provide clear instructions
-        4. If there are issues, explain them clearly
+        Requisitos:
+        1. Sé conversacional pero profesional
+        2. Si falta información, solicítala
+        3. Si se procede al siguiente estado, proporciona instrucciones claras
+        4. Si hay problemas, explícalos claramente
         """
 
         if self.llm_provider == "anthropic":
@@ -338,23 +338,23 @@ class LLMEnhancedChatbot:
                 ]
             )
             content_response = parse_openai_content(response.choices[0].message.content)
-            print ("CONTENT_PARSED", content_response)
+            print("CONTENT_PARSED", content_response)
             return safe_json_loads(content_response)
 
     def _confirms_price(self, message: str) -> bool:
-        """Check if user confirms the price"""
-        positive_responses = {'yes', 'yeah', 'sure', 'ok', 'okay', 'correct', 'y', 'proceed'}
+        """Verificar si el usuario confirma el precio"""
+        positive_responses = {'si', 'sí', 'claro', 'ok', 'okay', 'correcto', 's', 'proceder'}
         return message.lower().strip() in positive_responses
 
     def _confirms_order(self, message: str) -> bool:
-        """Check if user confirms the order"""
-        positive_responses = {'yes', 'yeah', 'sure', 'ok', 'okay', 'confirm', 'y', 'place order'}
+        """Verificar si el usuario confirma el pedido"""
+        positive_responses = {'si', 'sí', 'claro', 'ok', 'okay', 'confirmar', 's', 'realizar pedido'}
         return message.lower().strip() in positive_responses
 
     async def _process_order(self) -> str:
-        """Process the order before final confirmation"""
+        """Procesar el pedido antes de la confirmación final"""
         try:
-            # Validate all items one final time
+            # Validar todos los artículos una última vez
             invalid_items = []
             for item in self.order_context.items:
                 is_valid, message = await self.db_manager.validate_inventory(
@@ -366,22 +366,22 @@ class LLMEnhancedChatbot:
 
             if invalid_items:
                 self.state = ConversationState.ERROR
-                return "Some items are no longer available:\n" + "\n".join(invalid_items)
+                return "Algunos artículos ya no están disponibles:\n" + "\n".join(invalid_items)
 
-            # Validate shipping address
+            # Validar dirección de envío
             if not self.order_context.shipping_address:
                 self.state = ConversationState.ERROR
-                return "Shipping address is missing. Please provide a valid address."
+                return "Falta la dirección de envío. Por favor proporcione una dirección válida."
 
-            # Calculate final totals
+            # Calcular totales finales
             self._update_total_amount()
 
-            return f"Order validated. Total amount: ${self.order_context.total_amount:.2f}\nProceed with order creation?"
+            return f"Pedido validado. Monto total: ${self.order_context.total_amount:.2f}\n¿Desea proceder con la creación del pedido?"
 
         except Exception as e:
-            logger.error(f"Error processing order: {str(e)}")
+            logger.error(f"Error procesando el pedido: {str(e)}")
             self.state = ConversationState.ERROR
-            return f"Error processing order: {str(e)}"
+            return f"Error al procesar el pedido: {str(e)}"
 
     def _update_total_amount(self):
         """Update the total amount of the order"""
@@ -426,31 +426,31 @@ class LLMEnhancedChatbot:
         self.order_context = OrderContext()
 
     async def _handle_clarification(self, message: str) -> str:
-        """Handle cases where clarification is needed"""
+        """Manejar casos donde se necesita aclaración"""
         previous_state = self.state
         self.state = ConversationState.CLARIFICATION
 
         clarification_prompts = {
             ConversationState.CUSTOMER_SELECTION:
-                "Could you please provide your name and email address?",
+                "¿Podría proporcionarme su nombre y dirección de correo electrónico?",
             ConversationState.PRODUCT_SELECTION:
-                "Could you specify which product you're interested in?",
+                "¿Podría especificar qué producto le interesa?",
             ConversationState.QUANTITY_INPUT:
-                "Please specify how many units you'd like to order.",
+                "Por favor, especifique cuántas unidades desea ordenar.",
             ConversationState.SHIPPING_ADDRESS:
-                "Please provide a complete shipping address.",
+                "Por favor, proporcione una dirección de envío completa.",
         }
 
         response = clarification_prompts.get(
             previous_state,
-            "Could you please clarify your request?"
+            "¿Podría aclarar su solicitud?"
         )
 
         self.state = previous_state
         return response
 
     async def _handle_modification(self, message: str, extracted_info: Dict) -> str:
-        """Handle order modifications"""
+        """Manejar modificaciones del pedido"""
         modification_type = extracted_info.get('entities', {}).get('modification_type')
 
         if modification_type == 'quantity':
@@ -460,15 +460,15 @@ class LLMEnhancedChatbot:
         elif modification_type == 'shipping':
             return await self._modify_shipping(extracted_info)
         else:
-            return "What would you like to modify? (quantity, product, or shipping address)"
+            return "¿Qué desea modificar? (cantidad, producto o dirección de envío)"
 
     async def _modify_quantity(self, extracted_info: Dict) -> str:
-        """Modify quantity of an existing item"""
+        """Modificar cantidad de un artículo existente"""
         product_id = extracted_info.get('entities', {}).get('product_id')
         new_quantity = extracted_info.get('entities', {}).get('quantity')
 
         if not product_id or not new_quantity:
-            return "Please specify which product and the new quantity."
+            return "Por favor, especifique qué producto y la nueva cantidad."
 
         for item in self.order_context.items:
             if item['product_id'] == product_id:
@@ -479,13 +479,13 @@ class LLMEnhancedChatbot:
                 if is_valid:
                     item['quantity'] = new_quantity
                     self._update_total_amount()
-                    return f"Quantity updated. New total: ${self.order_context.total_amount:.2f}"
-                return f"Cannot update quantity: {message}"
+                    return f"Cantidad actualizada. Nuevo total: ${self.order_context.total_amount:.2f}"
+                return f"No se puede actualizar la cantidad: {message}"
 
-        return "Product not found in your order."
+        return "Producto no encontrado en su pedido."
 
     async def _modify_product(self, extracted_info: Dict) -> str:
-        """Modify or remove a product"""
+        """Modificar o eliminar un producto"""
         product_id = extracted_info.get('entities', {}).get('product_id')
         action = extracted_info.get('entities', {}).get('action', 'remove')
 
@@ -495,41 +495,41 @@ class LLMEnhancedChatbot:
                 if item['product_id'] != product_id
             ]
             self._update_total_amount()
-            return f"Product removed. New total: ${self.order_context.total_amount:.2f}"
+            return f"Producto eliminado. Nuevo total: ${self.order_context.total_amount:.2f}"
 
-        return "Please specify what you'd like to do with the product."
+        return "Por favor, especifique qué desea hacer con el producto."
 
     async def _modify_shipping(self, extracted_info: Dict) -> str:
-        """Modify shipping address"""
+        """Modificar dirección de envío"""
         new_address = extracted_info.get('entities', {}).get('shipping_address')
 
         if new_address:
             self.order_context.shipping_address = new_address
-            return "Shipping address updated."
+            return "Dirección de envío actualizada."
 
-        return "Please provide the new shipping address."
+        return "Por favor proporcione la nueva dirección de envío."
 
     def _get_current_state_message(self) -> str:
-        """Get appropriate message for current state"""
+        """Obtener mensaje apropiado para el estado actual"""
         state_messages = {
             ConversationState.INIT:
-                "Welcome! How can I help you today?",
+                "¡Bienvenido! ¿Cómo puedo ayudarle hoy?",
             ConversationState.CUSTOMER_SELECTION:
-                "Please provide your customer information.",
+                "Por favor, proporcione su información de cliente.",
             ConversationState.PRODUCT_SELECTION:
-                "What product would you like to order?",
+                "¿Qué producto desea ordenar?",
             ConversationState.QUANTITY_INPUT:
-                "How many units would you like?",
+                "¿Cuántas unidades desea?",
             ConversationState.SHIPPING_ADDRESS:
-                "Where should we ship your order?",
+                "¿A dónde debemos enviar su pedido?",
             ConversationState.ORDER_SUMMARY:
-                "Here's your order summary.",
+                "Aquí está el resumen de su pedido.",
             ConversationState.ORDER_CONFIRMATION:
-                "Would you like to confirm this order?",
+                "¿Desea confirmar este pedido?",
             ConversationState.ERROR:
-                "I apologize, but there was an error. Would you like to try again?"
+                "Me disculpo, pero hubo un error. ¿Desea intentarlo de nuevo?"
         }
-        return state_messages.get(self.state, "How can I help you?")
+        return state_messages.get(self.state, "¿Cómo puedo ayudarle?")
 
     def _log_state_transition(self, previous_state: ConversationState):
         """Log state transitions for debugging"""
@@ -558,84 +558,82 @@ class LLMEnhancedChatbot:
             return False
 
     async def _handle_state(self, message: str, extracted_info: Dict) -> str:
-        """Handle the conversation based on current state"""
+        """Manejar la conversación basada en el estado actual"""
         print("STATE ", self.state)
         try:
             if self.state == ConversationState.INIT:
-
                 if customer := await self._identify_customer(extracted_info):
                     self.order_context.customer_id = customer.get("id")
                     self.state = ConversationState.CUSTOMER_CONFIRMATION
-                    return f"Welcome back {customer.get('name')}! Would you like to place a new order?"
+                    return f"¡Bienvenido de nuevo {customer.get('name')}! ¿Desea realizar un nuevo pedido?"
                 else:
                     self.state = ConversationState.GREETING
-                return "Welcome! I'm here to help you place an order. Are you a returning customer?"
+                    return "¡Bienvenido! Estoy aquí para ayudarle a realizar su pedido. ¿Es usted un cliente recurrente?"
 
             elif self.state == ConversationState.GREETING:
-                # Handle customer identification
+                # Manejar identificación del cliente
                 if customer := await self._identify_customer(extracted_info):
                     self.order_context.customer_id = customer.get("id")
                     self.state = ConversationState.ORDER_START
-                    return f"Welcome back {customer.get('name')}! Would you like to place a new order?"
+                    return f"¡Bienvenido de nuevo {customer.get('name')}! ¿Desea realizar un nuevo pedido?"
                 else:
                     self.state = ConversationState.CUSTOMER_SELECTION
-                    return "Could you please provide your customer information?"
+                    return "¿Podría proporcionarme su información de cliente?"
 
             elif self.state == ConversationState.CUSTOMER_CONFIRMATION:
-                # Handle customer confirmation
+                # Manejar confirmación del cliente
                 if extracted_info["suggested_next_state"]:
                     new_state = ConversationState(extracted_info["suggested_next_state"])
-                    print("NEW_STATE ",new_state)
+                    print("NEW_STATE ", new_state)
                     if self.is_valid_state_transition(new_state):
                         self.state = new_state
-                        return "Awesome! What products would you like to order?"
+                        return "¡Excelente! ¿Qué productos desea ordenar?"
                     else:
                         self.state = ConversationState.CUSTOMER_SELECTION
-                        return "How can I Help you?"
-
+                        return "¿Cómo puedo ayudarle?"
                 else:
                     self.state = ConversationState.CUSTOMER_SELECTION
-                    return "Could you please provide your customer information?"
+                    return "¿Podría proporcionarme su información de cliente?"
 
             elif self.state == ConversationState.CUSTOMER_SELECTION:
-                # Handle new customer registration or lookup
+                # Manejar registro de nuevo cliente o búsqueda
                 customer_info = await self._process_customer_info(extracted_info)
                 if customer_info:
                     self.state = ConversationState.ORDER_START
-                    return "I've found your information. Would you like to proceed with placing an order?"
-                return "I couldn't find your information. Could you please provide more details?"
+                    return "He encontrado su información. ¿Desea proceder con la realización del pedido?"
+                return "No pude encontrar su información. ¿Podría proporcionar más detalles?"
 
             elif self.state == ConversationState.ORDER_START:
                 self.state = ConversationState.PRODUCT_SELECTION
-                return "What products would you like to order?"
+                return "¿Qué productos desea ordenar?"
 
             elif self.state == ConversationState.PRODUCT_SELECTION:
-                # Handle product selection
+                # Manejar selección de producto
                 if product := await self._process_product_selection(extracted_info):
                     self.state = ConversationState.QUANTITY_INPUT
-                    return f"How many {product.get('name')} would you like to order?"
-                return "I couldn't find that product. Could you please specify another product?"
+                    return f"¿Cuántas unidades de {product.get('name')} desea ordenar?"
+                return "No pude encontrar ese producto. ¿Podría especificar otro producto?"
 
             elif self.state == ConversationState.QUANTITY_INPUT:
-                # Handle quantity input and validation
+                # Manejar entrada de cantidad y validación
                 if await self._validate_quantity(extracted_info):
                     self.state = ConversationState.ADD_MORE_PRODUCTS
-                    return "Would you like to add more products to your order?"
-                return "I'm sorry, that quantity is not available. Please try a different quantity."
+                    return "¿Desea agregar más productos a su pedido?"
+                return "Lo siento, esa cantidad no está disponible. Por favor, intente con una cantidad diferente."
 
             elif self.state == ConversationState.ADD_MORE_PRODUCTS:
                 if self._wants_more_products(message):
                     self.state = ConversationState.PRODUCT_SELECTION
-                    return "What other products would you like to add?"
+                    return "¿Qué otros productos desea agregar?"
                 self.state = ConversationState.SHIPPING_ADDRESS
-                return "Great! Should we use your default shipping address?"
+                return "¡Perfecto! ¿Debemos usar su dirección de envío predeterminada?"
 
             elif self.state == ConversationState.SHIPPING_ADDRESS:
-                # Handle shipping address confirmation/update
+                # Manejar confirmación/actualización de dirección de envío
                 if await self._process_shipping_address(extracted_info):
                     self.state = ConversationState.SPECIAL_INSTRUCTIONS
-                    return "Would you like to add any special instructions for this order?"
-                return "Could you please provide a valid shipping address?"
+                    return "¿Desea agregar alguna instrucción especial para este pedido?"
+                return "¿Podría proporcionar una dirección de envío válida?"
 
             elif self.state == ConversationState.SPECIAL_INSTRUCTIONS:
                 self._add_special_instructions(message)
@@ -644,32 +642,32 @@ class LLMEnhancedChatbot:
 
             elif self.state == ConversationState.ORDER_SUMMARY:
                 self.state = ConversationState.PRICE_CONFIRMATION
-                return "The total for your order will be ${:.2f}. Would you like to proceed?".format(
+                return "El total de su pedido será ${:.2f}. ¿Desea proceder?".format(
                     self.order_context.total_amount or 0
                 )
 
             elif self.state == ConversationState.PRICE_CONFIRMATION:
                 if self._confirms_price(message):
                     self.state = ConversationState.ORDER_CONFIRMATION
-                    return "Would you like to confirm this order?"
+                    return "¿Desea confirmar este pedido?"
                 self.state = ConversationState.CANCEL
-                return "Would you like to modify the order or cancel it?"
+                return "¿Desea modificar el pedido o cancelarlo?"
 
             elif self.state == ConversationState.ORDER_CONFIRMATION:
                 if self._confirms_order(message):
                     self.state = ConversationState.ORDER_PROCESSING
                     return await self._process_order()
                 self.state = ConversationState.CANCEL
-                return "Order cancelled. Would you like to start over?"
+                return "Pedido cancelado. ¿Desea comenzar de nuevo?"
 
             elif self.state == ConversationState.ORDER_PROCESSING:
                 order_result = await self._finalize_order()
                 self.state = ConversationState.ORDER_COMPLETE
-                return f"Your order has been successfully placed! Order ID: {order_result['order_id']}"
+                return f"¡Su pedido ha sido realizado con éxito! ID del Pedido: {order_result['order_id']}"
 
             elif self.state == ConversationState.ERROR:
                 self.state = ConversationState.INIT
-                return "I apologize for the error. Would you like to start over?"
+                return "Me disculpo por el error. ¿Desea comenzar de nuevo?"
 
             else:
                 return await self.generate_response(message, extracted_info)
@@ -677,7 +675,7 @@ class LLMEnhancedChatbot:
         except Exception as e:
             logger.error(f"Error handling state {self.state}: {str(e)}")
             self.state = ConversationState.ERROR
-            return f"I apologize, but something went wrong. Would you like to try again?"
+            return f"Me disculpo, pero algo salió mal. ¿Desea intentarlo de nuevo?"
 
     async def process_message(self, message: str) -> str:
         try:
@@ -709,7 +707,7 @@ class LLMEnhancedChatbot:
         except Exception as e:
             logger.error(f"Error processing message: {str(e)}")
             self.state = ConversationState.ERROR
-            return f"I apologize, but I encountered an error: {str(e)}. Let's start over."
+            return f"Disculpe, encontre un error: {str(e)}. ¿Desea intentarlo de nuevo?"
 
     def is_valid_state_transition(self, new_state: ConversationState) -> bool:
         valid_transitions = {
@@ -807,33 +805,33 @@ class LLMEnhancedChatbot:
         self.state = ConversationState.INIT
 
     async def format_order_summary(self) -> str:
-        """Generate a formatted order summary"""
+        """Generar un resumen del pedido formateado"""
         if not all([hasattr(self, attr) for attr in
                     ['current_customer', 'current_product', 'current_quantity', 'shipping_address']]):
-            return "Unable to generate order summary - missing information"
+            return "No se puede generar el resumen del pedido - falta información"
 
         total_amount = self.current_product['price'] * self.current_quantity
 
-        summary = "Order Summary:\n"
-        summary += f"Customer: {self.current_customer['name']}\n"
-        summary += f"Product: {self.current_product['name']}\n"
-        summary += f"Quantity: {self.current_quantity}\n"
-        summary += f"Unit Price: ${self.current_product['price']:.2f}\n"
-        summary += f"Total Amount: ${total_amount:.2f}\n"
-        summary += f"Shipping Address: {self.shipping_address}\n"
+        summary = "Resumen del Pedido:\n"
+        summary += f"Cliente: {self.current_customer['name']}\n"
+        summary += f"Producto: {self.current_product['name']}\n"
+        summary += f"Cantidad: {self.current_quantity}\n"
+        summary += f"Precio Unitario: ${self.current_product['price']:.2f}\n"
+        summary += f"Monto Total: ${total_amount:.2f}\n"
+        summary += f"Dirección de Envío: {self.shipping_address}\n"
 
         return summary
 
     async def handle_special_requests(self, message: str) -> str:
-        """Handle special requests or questions"""
+        """Manejar solicitudes o preguntas especiales"""
         prompt = f"""
-        The user has a special request or question:
+        El usuario tiene una solicitud o pregunta especial:
         "{message}"
 
-        Generate a helpful response that:
-        1. Addresses their specific request
-        2. Maintains the current order context
-        3. Guides them back to the ordering process if needed
+        Genera una respuesta útil que:
+        1. Aborde su solicitud específica
+        2. Mantenga el contexto actual del pedido
+        3. Los guíe de vuelta al proceso de pedido si es necesario
         """
 
         if self.llm_provider == "anthropic":
@@ -856,21 +854,21 @@ class LLMEnhancedChatbot:
                 ]
             )
             content_response = parse_openai_content(response.choices[0].message.content)
-            print ("CONTENT_PARSED", content_response)
+            print("CONTENT_PARSED", content_response)
             return safe_json_loads(content_response)
 
     async def handle_error_recovery(self, error_message: str) -> str:
-        """Handle error recovery and provide guidance"""
+        """Manejar la recuperación de errores y proporcionar orientación"""
         self.state = ConversationState.ERROR
 
         recovery_prompt = f"""
-        An error occurred: "{error_message}"
+        Ha ocurrido un error: "{error_message}"
 
-        Generate a helpful response that:
-        1. Apologizes for the error
-        2. Explains what went wrong in simple terms
-        3. Provides clear next steps
-        4. Offers to start over if needed
+        Genera una respuesta útil que:
+        1. Se disculpe por el error
+        2. Explique qué salió mal en términos simples
+        3. Proporcione pasos claros a seguir
+        4. Ofrezca comenzar de nuevo si es necesario
         """
 
         if self.llm_provider == "anthropic":
@@ -893,7 +891,7 @@ class LLMEnhancedChatbot:
                 ]
             )
             content_response = parse_openai_content(response.choices[0].message.content)
-            print ("CONTENT_PARSED", content_response)
+            print("CONTENT_PARSED", content_response)
             return safe_json_loads(content_response)
 
     async def save_conversation_context(self) -> Dict:

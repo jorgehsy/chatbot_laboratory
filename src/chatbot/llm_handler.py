@@ -57,7 +57,7 @@ class LLMHandler:
             self.default_model = "gpt-4o"
 
     def _get_default_config(self) -> Dict:
-        """Get default configuration for the LLM"""
+        """Obtener configuración predeterminada para el LLM"""
         return {
             LLMProvider.ANTHROPIC: {
                 "temperature": 0.7,
@@ -73,50 +73,50 @@ class LLMHandler:
 
     @lru_cache(maxsize=100)
     def _get_system_prompt(self, context: str = "") -> str:
-        """Get cached system prompt with context"""
-        return f"""You are an AI sales assistant helping with order processing.
-        Your role is to understand customer requests and extract relevant information.
+        """Obtener prompt del sistema en caché con contexto"""
+        return f"""Eres un asistente de ventas AI que ayuda con el procesamiento de pedidos.
+        Tu función es comprender las solicitudes de los clientes y extraer información relevante.
 
-        Current Context:
+        Contexto Actual:
         {context}
 
-        Guidelines:
-        1. Extract customer details, products, quantities, and shipping information
-        2. Identify the primary intent of each message
-        3. Maintain a professional and helpful tone
-        4. Ask for clarification when needed
-        5. Handle complex orders and special requests appropriately
+        Directrices:
+        1. Extraer detalles del cliente, productos, cantidades e información de envío
+        2. Identificar la intención principal de cada mensaje
+        3. Mantener un tono profesional y servicial
+        4. Solicitar aclaraciones cuando sea necesario
+        5. Manejar pedidos complejos y solicitudes especiales apropiadamente
 
-        Available Actions:
-        - Order processing
-        - Product inquiries
-        - Shipping information
-        - Order modifications
-        - Status checks
+        Acciones Disponibles:
+        - Procesamiento de pedidos
+        - Consultas de productos
+        - Información de envío
+        - Modificaciones de pedidos
+        - Verificaciones de estado
         """
 
     async def extract_intent(self, message: str, context: str = "") -> Intent:
-        """Extract intent and entities from user message"""
+        """Extraer intención y entidades del mensaje del usuario"""
         prompt = f"""
-        Analyze the following message and extract order-related information.
+        Analiza el siguiente mensaje y extrae información relacionada con el pedido.
 
-        Message: "{message}"
+        Mensaje: "{message}"
 
-        Return a JSON object with:
+        Devuelve un objeto JSON con:
         {{
-            "primary": "intent_type",
-            "confidence": 0.0 to 1.0,
+            "primary": "tipo_de_intencion",
+            "confidence": 0.0 a 1.0,
             "entities": {{
-                "customer_name": "name or null",
-                "customer_id": number or null,
+                "customer_name": "nombre o null",
+                "customer_id": número o null,
                 "products": [
-                    {{"name": "product_name", "quantity": number}}
+                    {{"name": "nombre_producto", "quantity": número}}
                 ],
-                "shipping_address": "address or null",
-                "special_instructions": "instructions or null"
+                "shipping_address": "dirección o null",
+                "special_instructions": "instrucciones o null"
             }},
-            "requires_clarification": boolean,
-            "suggested_next_state": "state_name or null"
+            "requires_clarification": booleano,
+            "suggested_next_state": "nombre_estado o null"
         }}
         """
 
@@ -128,22 +128,22 @@ class LLMHandler:
 
             return Intent(**json.loads(response))
         except Exception as e:
-            raise ValueError(f"Error extracting intent: {str(e)}")
+            raise ValueError(f"Error al extraer la intención: {str(e)}")
 
     async def generate_response(self, message: str, intent: Intent, context: str = "") -> str:
-        """Generate natural language response based on intent"""
+        """Generar respuesta en lenguaje natural basada en la intención"""
         prompt = f"""
-        Generate a natural response to the user's message.
+        Genera una respuesta natural al mensaje del usuario.
 
-        Message: "{message}"
-        Extracted Intent: {intent.json()}
+        Mensaje: "{message}"
+        Intención Extraída: {intent.json()}
 
-        Requirements:
-        1. Be professional and helpful
-        2. Address all identified entities
-        3. Ask for clarification if needed
-        4. Provide next steps or instructions
-        5. Keep the conversation flowing naturally
+        Requisitos:
+        1. Ser profesional y servicial
+        2. Abordar todas las entidades identificadas
+        3. Solicitar aclaraciones si es necesario
+        4. Proporcionar pasos siguientes o instrucciones
+        5. Mantener un flujo natural de conversación
         """
 
         if self.provider == LLMProvider.ANTHROPIC:
@@ -151,7 +151,7 @@ class LLMHandler:
         return await self._openai_completion(prompt, context)
 
     async def _anthropic_completion(self, prompt: str, context: str = "") -> str:
-        """Get completion from Anthropic's Claude"""
+        """Obtener respuesta de Claude de Anthropic"""
         messages = [{
             "role": "system",
             "content": self._get_system_prompt(context)
@@ -169,7 +169,7 @@ class LLMHandler:
         return response.content[0].text
 
     async def _openai_completion(self, prompt: str, context: str = "") -> str:
-        """Get completion from OpenAI's GPT"""
+        """Obtener respuesta de GPT de OpenAI"""
         response = self.client.chat.completions.create(
             model=self.model_config.get("model", self.default_model),
             messages=[
@@ -182,73 +182,73 @@ class LLMHandler:
         return response.choices[0].message.content
 
     async def handle_special_cases(self, message: str, context: str = "") -> Dict:
-        """Handle special cases and complex queries"""
+        """Manejar casos especiales y consultas complejas"""
         prompt = f"""
-        Analyze this message for special handling requirements:
+        Analiza este mensaje para requisitos de manejo especial:
         "{message}"
 
-        Identify if this requires:
-        1. Multiple product handling
-        2. Complex shipping requirements
-        3. Special pricing or discounts
-        4. Order modifications
-        5. Custom requests
+        Identifica si esto requiere:
+        1. Manejo de múltiples productos
+        2. Requisitos complejos de envío
+        3. Precios especiales o descuentos
+        4. Modificaciones de pedidos
+        5. Solicitudes personalizadas
 
-        Return a JSON object with handling instructions.
+        Devuelve un objeto JSON con instrucciones de manejo.
         """
 
         response = await self.generate_response(prompt, None, context)
         return json.loads(response)
 
     def add_to_history(self, message: Message):
-        """Add message to conversation history"""
+        """Agregar mensaje al historial de conversación"""
         self.conversation_history.append(message)
 
     def get_conversation_summary(self) -> str:
-        """Generate a summary of the conversation"""
+        """Generar un resumen de la conversación"""
         messages = [msg.content for msg in self.conversation_history[-5:]]
         return "\n".join(messages)
 
     async def clarify_ambiguity(self, message: str, ambiguous_entities: List[str]) -> str:
-        """Generate a clarifying question for ambiguous input"""
+        """Generar una pregunta aclaratoria para entrada ambigua"""
         prompt = f"""
-        The following entities are ambiguous in the message:
+        Las siguientes entidades son ambiguas en el mensaje:
         {', '.join(ambiguous_entities)}
 
-        Message: "{message}"
+        Mensaje: "{message}"
 
-        Generate a natural clarifying question to resolve the ambiguity.
+        Genera una pregunta natural aclaratoria para resolver la ambigüedad.
         """
 
         return await self.generate_response(prompt, None)
 
     @lru_cache(maxsize=100)
     def get_prompt_template(self, template_name: str) -> str:
-        """Get cached prompt template"""
+        """Obtener plantilla de prompt en caché"""
         templates = {
             "order_confirmation": """
-                Please confirm the following order details:
-                - Customer: {customer_name}
-                - Products: {products}
-                - Shipping to: {shipping_address}
-                - Total Amount: ${total_amount}
+                Por favor confirma los siguientes detalles del pedido:
+                - Cliente: {customer_name}
+                - Productos: {products}
+                - Envío a: {shipping_address}
+                - Monto Total: ${total_amount}
 
-                Is this correct? Would you like to proceed with the order?
+                ¿Es esto correcto? ¿Deseas proceder con el pedido?
             """,
             "error_handling": """
-                I apologize, but I encountered an error: {error_message}
+                Me disculpo, pero encontré un error: {error_message}
 
-                Would you like to:
-                1. Try again
-                2. Start over
-                3. Speak with a human representative
+                ¿Te gustaría:
+                1. Intentar de nuevo
+                2. Empezar de nuevo
+                3. Hablar con un representante humano
             """,
-            # Add more templates as needed
+            # Agregar más plantillas según sea necesario
         }
         return templates.get(template_name, "")
 
     async def validate_entities(self, entities: EntityExtraction) -> Dict[str, bool]:
-        """Validate extracted entities"""
+        """Validar entidades extraídas"""
         validations = {
             "customer": bool(entities.customer_name or entities.customer_id),
             "products": len(entities.products) > 0 and all(
@@ -259,15 +259,15 @@ class LLMHandler:
         return validations
 
     async def handle_error(self, error: Exception, context: str = "") -> str:
-        """Generate appropriate error response"""
+        """Generar respuesta apropiada de error"""
         prompt = f"""
-        An error occurred: {str(error)}
+        Ocurrió un error: {str(error)}
 
-        Generate a helpful error message that:
-        1. Apologizes for the issue
-        2. Explains what went wrong
-        3. Suggests next steps
-        4. Maintains a professional tone
+        Genera un mensaje de error útil que:
+        1. Se disculpe por el problema
+        2. Explique qué salió mal
+        3. Sugiera los siguientes pasos
+        4. Mantenga un tono profesional
         """
 
         return await self.generate_response(prompt, None, context)

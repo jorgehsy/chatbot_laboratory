@@ -37,7 +37,7 @@ class BulkOrderManager:
         self.db_manager = db_manager
 
     async def validate_bulk_order(self, items: List[BulkOrderItem]) -> List[InventoryValidationResult]:
-        """Validate inventory for multiple products simultaneously"""
+        """Validar inventario para múltiples productos simultáneamente"""
         validation_results = []
 
         with self.db_manager.get_db() as db:
@@ -46,9 +46,9 @@ class BulkOrderManager:
                 if not product:
                     validation_results.append(InventoryValidationResult(
                         is_valid=False,
-                        message=f"Product ID {item.product_id} not found",
+                        message=f"Producto con ID {item.product_id} no encontrado",
                         available_quantity=0,
-                        product_name="Unknown",
+                        product_name="Desconocido",
                         product_id=item.product_id,
                         min_stock_level=0,
                         current_price=0.0
@@ -56,17 +56,17 @@ class BulkOrderManager:
                     continue
 
                 is_valid = True
-                message = "Available"
+                message = "Disponible"
 
-                # Check if quantity is available
+                # Verificar si la cantidad está disponible
                 if product.inventory_count < item.quantity:
                     is_valid = False
-                    message = f"Only {product.inventory_count} units available"
+                    message = f"Solo {product.inventory_count} unidades disponibles"
 
-                # Check minimum stock level
+                # Verificar nivel mínimo de stock
                 elif product.inventory_count - item.quantity < product.min_stock_level:
                     is_valid = False
-                    message = f"Order would put inventory below minimum stock level ({product.min_stock_level})"
+                    message = f"El pedido dejaría el inventario por debajo del nivel mínimo de stock ({product.min_stock_level})"
 
                 validation_results.append(InventoryValidationResult(
                     is_valid=is_valid,
@@ -81,10 +81,10 @@ class BulkOrderManager:
         return validation_results
 
     async def create_bulk_order(self, context: BulkOrderContext) -> Dict:
-        """Create order with multiple products"""
+        """Crear pedido con múltiples productos"""
         with self.db_manager.get_db() as db:
             try:
-                # Validate all products first
+                # Validar todos los productos primero
                 validation_results = await self.validate_bulk_order(context.items)
                 invalid_items = [r for r in validation_results if not r.is_valid]
 
@@ -92,9 +92,9 @@ class BulkOrderManager:
                     error_messages = [
                         f"{r.product_name}: {r.message}" for r in invalid_items
                     ]
-                    raise ValueError(f"Inventory validation failed:\n" + "\n".join(error_messages))
+                    raise ValueError(f"Validación de inventario fallida:\n" + "\n".join(error_messages))
 
-                # Create main order
+                # Crear pedido principal
                 order = Order(
                     customer_id=context.customer_id,
                     shipping_address=context.shipping_address,
@@ -107,7 +107,7 @@ class BulkOrderManager:
                 total_amount = 0
                 order_items = []
 
-                # Create order items and update inventory
+                # Crear elementos del pedido y actualizar inventario
                 for item in context.items:
                     product = db.query(Product).filter(Product.id == item.product_id).first()
 
@@ -118,7 +118,7 @@ class BulkOrderManager:
                         unit_price=product.price
                     )
 
-                    # Update inventory
+                    # Actualizar inventario
                     product.inventory_count -= item.quantity
                     total_amount += product.price * item.quantity
 
@@ -137,23 +137,23 @@ class BulkOrderManager:
 
             except SQLAlchemyError as e:
                 db.rollback()
-                raise ValueError(f"Database error: {str(e)}")
+                raise ValueError(f"Error en la base de datos: {str(e)}")
 
     async def split_bulk_order(self, context: BulkOrderContext) -> List[Dict]:
-        """Split a bulk order into multiple orders based on inventory availability"""
+        """Dividir un pedido masivo en múltiples pedidos según disponibilidad de inventario"""
         available_items = []
         backorder_items = []
 
-        # Check inventory and split items
+        # Verificar inventario y dividir elementos
         validation_results = await self.validate_bulk_order(context.items)
         for item, validation in zip(context.items, validation_results):
             if validation.is_valid:
                 available_items.append(item)
             else:
-                # Calculate available quantity
+                # Calcular cantidad disponible
                 available_qty = validation.available_quantity
                 if available_qty > 0:
-                    # Split the item
+                    # Dividir el elemento
                     available_items.append(BulkOrderItem(
                         product_id=item.product_id,
                         quantity=available_qty
@@ -166,41 +166,41 @@ class BulkOrderManager:
                     backorder_items.append(item)
 
         orders = []
-        # Create order for available items
+        # Crear pedido para elementos disponibles
         if available_items:
             available_context = BulkOrderContext(
                 customer_id=context.customer_id,
                 items=available_items,
                 shipping_address=context.shipping_address,
-                special_instructions=f"{context.special_instructions} (Partial Order - Available Items)"
+                special_instructions=f"{context.special_instructions} (Pedido Parcial - Artículos Disponibles)"
             )
             try:
                 order = await self.create_bulk_order(available_context)
-                order["order_type"] = "available"
+                order["order_type"] = "disponible"
                 orders.append(order)
             except ValueError as e:
-                print(f"Error creating available items order: {e}")
+                print(f"Error al crear pedido de artículos disponibles: {e}")
 
-        # Create backorder for remaining items
+        # Crear pedido pendiente para elementos restantes
         if backorder_items:
             backorder_context = BulkOrderContext(
                 customer_id=context.customer_id,
                 items=backorder_items,
                 shipping_address=context.shipping_address,
-                special_instructions=f"{context.special_instructions} (Backorder)"
+                special_instructions=f"{context.special_instructions} (Pedido Pendiente)"
             )
-            # Store backorder for future processing
+            # Almacenar pedido pendiente para procesamiento futuro
             backorder = await self.create_backorder(backorder_context)
-            backorder["order_type"] = "backorder"
+            backorder["order_type"] = "pendiente"
             orders.append(backorder)
 
         return orders
 
     async def create_backorder(self, context: BulkOrderContext) -> Dict:
-        """Create a backorder for items that cannot be fulfilled immediately"""
+        """Crear un pedido pendiente para artículos que no pueden ser surtidos inmediatamente"""
         with self.db_manager.get_db() as db:
             try:
-                # Create backorder record
+                # Crear registro de pedido pendiente
                 order = Order(
                     customer_id=context.customer_id,
                     shipping_address=context.shipping_address,
@@ -213,7 +213,7 @@ class BulkOrderManager:
                 total_amount = 0
                 order_items = []
 
-                # Create backorder items
+                # Crear elementos del pedido pendiente
                 for item in context.items:
                     product = db.query(Product).filter(Product.id == item.product_id).first()
 
@@ -235,19 +235,19 @@ class BulkOrderManager:
                     "order_id": order.id,
                     "total_amount": total_amount,
                     "items_count": len(order_items),
-                    "status": "backorder"
+                    "status": "pendiente"
                 }
 
             except SQLAlchemyError as e:
                 db.rollback()
-                raise ValueError(f"Database error creating backorder: {str(e)}")
+                raise ValueError(f"Error en la base de datos al crear pedido pendiente: {str(e)}")
 
     async def get_bulk_order_summary(self, order_id: int) -> Dict:
-        """Get detailed summary of a bulk order"""
+        """Obtener resumen detallado de un pedido masivo"""
         with self.db_manager.get_db() as db:
             order = db.query(Order).filter(Order.id == order_id).first()
             if not order:
-                raise ValueError("Order not found")
+                raise ValueError("Pedido no encontrado")
 
             items_detail = []
             for item in order.items:
@@ -271,7 +271,7 @@ class BulkOrderManager:
             }
 
     async def check_bulk_order_status(self, order_ids: List[int]) -> List[Dict]:
-        """Check status of multiple orders simultaneously"""
+        """Verificar estado de múltiples pedidos simultáneamente"""
         with self.db_manager.get_db() as db:
             orders = db.query(Order).filter(Order.id.in_(order_ids)).all()
             return [{
@@ -282,9 +282,9 @@ class BulkOrderManager:
             } for order in orders]
 
     async def update_bulk_order_status(self, order_id: int, new_status: OrderStatus) -> bool:
-        """Update the status of a bulk order"""
+        """Actualizar el estado de un pedido masivo"""
         try:
             return await self.db_manager.update_order_status(order_id, new_status)
         except Exception as e:
-            print(f"Error updating order status: {e}")
+            print(f"Error al actualizar el estado del pedido: {e}")
             return False
